@@ -4,7 +4,31 @@ Changes
 9.1 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Add a hardened in-process execution runtime in the new
+  ``RestrictedPython.runtime`` package. It layers three independently
+  testable defences on top of the compile-time restrictions:
+
+  * An enumerable whitelist policy (``policy``). Allowed builtins carry
+    stable ``RP-WL-xxxx`` rule numbers; every call is resolved against the
+    set before execution and unknown operations are refused and audited.
+    The policy must fully load before any execution action and fails closed,
+    refusing every script, if loading raises.
+
+  * Per-execution resource quotas (``quota``) covering wall-clock time,
+    memory and concurrency. Exceeding any dimension terminates the current
+    script with a structured result naming the triggering dimension, and a
+    tripped quota stops all remaining guarded calls.
+
+  * Deterministic resource reclamation (``cleanup``) of open handles,
+    temporary files and child processes on both the success and failure
+    paths, reporting any residual resource kind.
+
+  The engine returns structured ``ExecutionResult`` objects with layer-
+  specific exit codes and reasons, sanitizes host paths from surfaced
+  messages, and keeps audit records limited to the rejection stage and rule
+  number. File-system/process resource factories are opt-in and withheld by
+  default so the sandbox exposes no host capability unless explicitly
+  granted.
 
 
 9.0 (2026-11-04)
